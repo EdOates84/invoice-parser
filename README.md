@@ -8,8 +8,6 @@
 
 [Demo Video](https://drive.google.com/file/d/1f9KMQHHnfMGe4aEhRouBhJp4gNrTExW3/view?usp=sharing)
 
-> Click the image above to watch the demo (Google Drive).
-
 ---
 
 ## What This Is
