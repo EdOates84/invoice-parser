@@ -1,0 +1,25 @@
+Meeting Notes - Product Team Standup
+November 15 , 2024
+
+Attendees : Alice , Bob , Carlos , Diana
+
+Discussion Points :
+1. Sprint 47 retrospective - team agreed to reduce WlP limits
+2. New feature deployment scheduled for next Tuesday
+3. Coffee machine on floor 3 needs repair - facilities notified
+4. Holiday party planning : venue shortlisted to 3 options
+
+Action ltems :
+- Alice : Send out survey for holiday party venue by Friday
+- Bob : Follow up with facilities about coffee machine
+- Carlos : Update sprint board with new WlP limits
+
+Next standup : Monday 9am
+Notes recorded by Diana
+
+# EXPECTED: FAILED (not NEEDS_REVIEW)
+# Critically empty check in processor.py fires immediately:
+#   no_amounts = total is None AND subtotal is None
+#   no_lines   = no line_items
+#   → FAILED with error "Extraction produced no financial data"
+# No retry loop entered. No validation checks run.

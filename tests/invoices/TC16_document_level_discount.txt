@@ -1,0 +1,34 @@
+INVOICE
+
+Horizon Office Supplies
+22 Commerce Street, Atlanta, GA 30301
+
+To: Lakeside Law Associates
+88 Legal Drive, Nashville, TN 37201
+
+Invoice Number : HOS-2024-0781
+Invoice Date   : 11/22/2024
+Currency       : USD
+
+Description                  Qty   Unit Price    Amount
+--------------------------------------------------------
+Executive Desk Chair           5     190.00       950.00
+Monitor Stand (Adjustable)     5      40.00       200.00
+--------------------------------------------------------
+                                        Subtotal :   1,150.00
+                                Loyalty Discount :     -57.50
+                                      Tax (10%) :     115.00
+                                          Total :   1,207.50
+
+Thank you for being a valued customer (5% loyalty discount applied).
+
+# EXPECTED: COMPLETED, all checks pass
+# discount field present on extraction — validator uses:
+#   total = subtotal - discount + shipping + tax
+#
+# item0: 5 × 190 = 950   OK
+# item1: 5 × 40  = 200   OK
+# subtotal: 950+200 = 1150 = reported  OK
+# total: 1150 - 57.50 + 0 + 115 = 1207.50 = reported  OK
+#
+# WITHOUT discount support: 1150 + 115 = 1265 ≠ 1207.50 → false FAIL

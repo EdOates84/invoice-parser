@@ -1,0 +1,29 @@
+INVOICE
+
+Strategic Advisors LLC
+One Executive Plaza
+Boston, MA 02110
+
+TO: Global Ventures Corp.
+321 Harbor View
+Seattle, WA 98101
+
+Invoice Reference : INV-2024-1105
+Invoice Date      : 11/08/2024
+Currency          : USD
+
+Service Description               Hours   Rate/Hr    Amount
+------------------------------------------------------------
+Management Consulting                 8    200.00   1,600.00
+Market Research Report                5    150.00     750.00
+Executive Travel Expenses             1    320.00     320.00
+Workshop Facilitation                 3    180.00     540.00
+------------------------------------------------------------
+                                    Net Amount :    2,500.00
+                                    VAT (15%)  :      375.00
+                                    Amount Due :    2,875.00
+
+# EXPECTED FAILURE: subtotal check
+# Sum of line items = 1600+750+320+540 = 3,210.00
+# But Net Amount printed as 2,500.00 (source doc error)
+# delta = 710.00 -- triggers retry loop

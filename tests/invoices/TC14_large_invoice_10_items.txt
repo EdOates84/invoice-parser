@@ -1,0 +1,40 @@
+lNVOlCE
+
+CloudStack lT Services
+1 Tech Plaza , San Jose , CA 95110
+support @ cloudstack.io
+
+To : Enterprise Corp.
+500 Corporate Drive , Chicago , lL 60601
+
+lnvoice Number : CS-2024-3301
+lnvoice Date   : 11/01/2024
+Due Date       : 12/01/2024
+Currency       : USD
+
+Description                          Qty   Unit Price    Amount
+---------------------------------------------------------------
+Cloud Storage (TB/month)               5      120.00      600.00
+Virtual Machines (per unit)           10       85.00      850.00
+Load Balancer Setup                    1      500.00      500.00
+SSL Certificates                       3       75.00      225.00
+DDoS Protection (monthly)              2      300.00      600.00
+Database lnstances                     4      200.00      800.00
+Content Delivery Network               1      450.00      450.00
+Monitoring & Alerting                  5       60.00      300.00
+Technical Support (hrs)                8      150.00    1,200.00
+Setup & Migration Fee                  1      750.00      750.00
+---------------------------------------------------------------
+                                           Subtotal :   6,275.00
+                                           Tax (10%):     627.50
+                                           TOTAL    :   6,902.50
+
+Payment due within 30 days.
+Please reference invoice number on payment.
+
+# EXPECTED: COMPLETED, all 12 checks pass
+# 10 line item checks + subtotal check + total check = 12 total
+# All math correct:
+# 5x120=600, 10x85=850, 1x500=500, 3x75=225, 2x300=600
+# 4x200=800, 1x450=450, 5x60=300, 8x150=1200, 1x750=750
+# Sum=6275, Tax 10%=627.50, Total=6902.50

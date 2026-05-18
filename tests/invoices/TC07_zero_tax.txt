@@ -1,0 +1,27 @@
+INVOICE
+
+Freelance Writer Pro
+Toronto, ON, Canada
+
+To: Digital Media Agency
+Vancouver, BC, Canada
+
+Invoice Number : FWP-2024-112
+Invoice Date   : 11/18/2024
+Currency       : CAD
+
+Description                        Qty   Rate      Amount
+----------------------------------------------------------
+Blog Articles (1000 words each)      4   250.00   1,000.00
+Social Media Content Pack            2   350.00     700.00
+Newsletter Copy (3 issues)           3   150.00     450.00
+----------------------------------------------------------
+                                       Subtotal :  2,150.00
+                                       Tax      :      0.00
+                                       Total Due :  2,150.00
+
+Net 15 payment terms.
+
+# EXPECTED: COMPLETED, all checks pass
+# tax_total = 0.00 (not null) -- Check 3 runs and passes
+# 2150.00 + 0.00 = 2150.00 = total

@@ -1,0 +1,37 @@
+INVOICE
+
+GreenLeaf Nursery Wholesale
+99 Garden Way, Sacramento, CA 95814
+
+To: Bloom Retail Stores
+200 Flower Street, Phoenix, AZ 85001
+
+Invoice No   : GL-2024-0512
+Date         : 11/21/2024
+Currency     : USD
+
+Item                         Qty   Unit Price    Amount
+--------------------------------------------------------
+Potted Orchids (mixed)        20      35.00       700.00
+Succulent Trays (12-pack)     15      28.00       420.00
+Fertilizer Bags (10kg)        10      22.00       220.00
+--------------------------------------------------------
+                                        Subtotal : 1,340.00
+                            Early Order Discount :   -67.00
+                              Freight Charge     :    45.00
+                                     Tax (9%)    :   120.60
+                                     TOTAL       : 1,438.60
+
+5% early order discount applied. Freight non-taxable.
+
+# EXPECTED: COMPLETED, all checks pass
+# Both discount AND shipping present simultaneously
+#
+# item0: 20 × 35  = 700   OK
+# item1: 15 × 28  = 420   OK
+# item2: 10 × 22  = 220   OK
+# subtotal: 700+420+220 = 1340  OK
+# total: 1340 - 67 + 45 + 120.60 = 1438.60  OK
+#
+# WITHOUT discount+shipping support:
+#   1340 + 120.60 = 1460.60 ≠ 1438.60 → false FAIL

@@ -1,0 +1,35 @@
+RECHNUNG / INVOICE
+
+Von / From :
+Muller Engineering GmbH
+Industriestrasse 42
+80331 Munchen , Deutschland
+USt-ldNr.: DE123456789
+
+An / To :
+British Exports Ltd.
+12 Harbour Street
+London , EC2R 8AJ
+United Kingdom
+
+Rechnungsnummer / Invoice No : RE-2024-0378
+Rechnungsdatum / Invoice Date : 10.11.2024
+Wahrung / Currency : EUR
+
+Beschreibung / Description    Menge   Einheitspreis    Betrag
+-------------------------------------------------------------
+Maschinenteil A-7                10     1.250,00       12.500,00
+Wartungsvertrag Q4                1     3.750,00        3.750,00
+Versandkosten / Shipping          1       125,50          125,50
+-------------------------------------------------------------
+                               Zwischensumme :    16.375,50 EUR
+                               MwSt. 19%     :     3.111,35 EUR
+                               Gesamtbetrag  :    19.486,85 EUR
+
+Zahlungsziel: 30 Tage
+lBAN: DE89370400440532013000
+
+# EXPECTED: COMPLETED, currency=EUR
+# European format: 1.250,00 = 1250.00
+# 10x1250=12500, 1x3750=3750, 1x125.50=125.50
+# Sum=16375.50, Tax 19%=3111.35, Total=19486.85

@@ -1,0 +1,27 @@
+INVOICE
+
+Office Supplies Direct
+Unit 5, Commerce Way
+Chicago, IL 60601
+
+Bill To: Meridian Consulting Group
+789 Oak Street, Austin, TX 78701
+
+Invoice No  : INV-2024-0293
+Date        : 11/20/2024
+Currency    : USD
+
+ITEM                         QTY   UNIT PRICE   AMOUNT
+-------------------------------------------------------
+Ergonomic Laptop Stand         3      45.00      125.00
+4-Port USB Hub                 2      30.00       60.00
+HDMI Monitor Cable             4      15.00       60.00
+Wireless Mouse                 1      55.00       55.00
+-------------------------------------------------------
+                              Sub Total :        300.00
+                              GST (10%) :         30.00
+                              Total     :        330.00
+
+# EXPECTED FAILURE: line_item_0
+# 3 x 45.00 = 135.00 but document says 125.00 (source doc typo)
+# delta = 10.00 -- triggers retry loop

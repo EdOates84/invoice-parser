@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FynOS Invoice Parser</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f6fa; color: #1a1a2e; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: .02em; }
+    header span { font-size: .8rem; background: #2ecc71; color: #fff; padding: .15rem .5rem; border-radius: 9999px; }
+    .layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 1.25rem; }
+    .card h2 { font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 1rem; border-bottom: 1px solid #f0f0f0; padding-bottom: .5rem; }
+    label { display: block; font-size: .8rem; font-weight: 600; color: #555; margin-bottom: .3rem; margin-top: .8rem; }
+    input[type=text], input[type=number], textarea {
+      width: 100%; padding: .45rem .6rem; border: 1px solid #ddd; border-radius: 6px;
+      font-size: .85rem; font-family: inherit; outline: none; transition: border-color .15s;
+    }
+    input:focus, textarea:focus { border-color: #6c63ff; }
+    textarea { resize: vertical; min-height: 160px; }
+    .model-tag { display: flex; align-items: center; gap: .4rem; background: #f0f0f8; border-radius: 6px; padding: .3rem .5rem; margin: .25rem 0; font-size: .78rem; font-family: monospace; }
+    .model-tag button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: .9rem; line-height: 1; padding: 0 .2rem; }
+    .model-tag .drag-handle { cursor: grab; color: #aaa; font-size: .9rem; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid #f5f5f5; }
+    .toggle-row span { font-size: .83rem; }
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #ccc; border-radius: 20px; cursor: pointer; transition: .2s; }
+    .slider:before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+    input:checked + .slider { background: #6c63ff; }
+    input:checked + .slider:before { transform: translateX(16px); }
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; border-radius: 7px; border: none; font-size: .85rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: #6c63ff; color: #fff; }
+    .btn-secondary { background: #f0f0f8; color: #444; }
+    .btn-success { background: #2ecc71; color: #fff; }
+    .btn-row { display: flex; gap: .6rem; margin-top: .8rem; }
+    .status-badge { display: inline-block; padding: .2rem .55rem; border-radius: 5px; font-size: .75rem; font-weight: 700; letter-spacing: .04em; }
+    .status-COMPLETED   { background: #d5f5e3; color: #1e8449; }
+    .status-FAILED      { background: #fde8e8; color: #c0392b; }
+    .status-NEEDS_REVIEW{ background: #fef3cd; color: #856404; }
+    .status-PROCESSING  { background: #dbeafe; color: #1d4ed8; }
+    .status-VALIDATING  { background: #e9d8fd; color: #6b21a8; }
+    .status-PENDING     { background: #f0f0f0; color: #666; }
+    .status-DUPLICATE   { background: #fff0e0; color: #c05c00; }
+    .check-row { display: flex; align-items: center; gap: .5rem; font-size: .78rem; padding: .25rem 0; border-bottom: 1px solid #f5f5f5; }
+    .check-pass { color: #2ecc71; font-weight: 700; }
+    .check-fail { color: #e74c3c; font-weight: 700; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .8rem; }
+    .result-item { background: #f9f9ff; border-radius: 6px; padding: .5rem .7rem; }
+    .result-item .key { font-size: .7rem; color: #888; text-transform: uppercase; letter-spacing: .05em; }
+    .result-item .val { font-size: .9rem; font-weight: 600; color: #1a1a2e; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    th { background: #f5f6fa; padding: .5rem .7rem; text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #888; border-bottom: 2px solid #e8e8f0; }
+    td { padding: .5rem .7rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    tr:hover td { background: #fafafe; }
+    .line-items-table th, .line-items-table td { padding: .35rem .5rem; }
+    .tag { display: inline-block; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; font-weight: 600; background: #eef; color: #6c63ff; }
+    .error-box { background: #fde8e8; border-radius: 6px; padding: .6rem .8rem; font-size: .8rem; color: #c0392b; margin-top: .5rem; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #6c63ff; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .main-col { display: flex; flex-direction: column; gap: 1.5rem; }
+    .saved-badge { font-size: .72rem; color: #2ecc71; margin-left: .4rem; }
+    .fault-scenario { display: flex; flex-direction: column; gap: .4rem; margin-top: .6rem; }
+    .fault-card { padding: .55rem .7rem; border-radius: 7px; border: 2px solid #e8e8f0; cursor: pointer; transition: border-color .15s, background .15s; }
+    .fault-card:hover { border-color: #b0a8ff; background: #fafaff; }
+    .fault-card.active { border-color: #6c63ff; background: #f0eeff; }
+    .fault-card .fault-name { font-size: .82rem; font-weight: 700; color: #1a1a2e; }
+    .fault-card .fault-desc { font-size: .74rem; color: #888; margin-top: .15rem; line-height: 1.4; }
+    .fault-badge { display:inline-block; padding:.1rem .4rem; border-radius:4px; font-size:.68rem; font-weight:700; }
+    .fault-badge-on { background:#ff4d4d22; color:#c0392b; }
+    .fault-badge-off { background:#2ecc7122; color:#1e8449; }
+  </style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<header>
+  <h1>FynOS Invoice Parser</h1>
+  <span>Multi-tier extraction</span>
+</header>
+
+<div class="layout">
+  <!-- ── LEFT: Config ────────────────────────────────────────────────────── -->
+  <div>
+    <div class="card">
+      <h2>Configuration <span class="saved-badge" x-show="savedMsg" x-text="savedMsg"></span></h2>
+
+      <label>LLM Models (Tier 1 — tried in order)</label>
+      <template x-for="(m, i) in config.llm_models" :key="i">
+        <div class="model-tag">
+          <span class="drag-handle">⠿</span>
+          <span x-text="m" style="flex:1"></span>
+          <button @click="config.llm_models.splice(i,1); saveConfig()" title="Remove">×</button>
+        </div>
+      </template>
+      <div style="display:flex;gap:.4rem;margin-top:.5rem;flex-direction:column">
+        <select x-model="newModel" style="width:100%;padding:.45rem .6rem;border:1px solid #ddd;border-radius:6px;font-size:.82rem;font-family:monospace;outline:none;background:#fff;cursor:pointer">
+          <option value="">— pick a model or type custom below —</option>
+          <optgroup label="☁ Anthropic">
+            <option value="anthropic/claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+            <option value="anthropic/claude-sonnet-4-6">claude-sonnet-4-6</option>
+          </optgroup>
+          <optgroup label="☁ OpenAI">
+            <option value="openai/gpt-4o-mini">gpt-4o-mini</option>
+            <option value="openai/gpt-4o">gpt-4o</option>
+          </optgroup>
+          <optgroup label="☁ Groq (free tier — console.groq.com)">
+            <option value="groq/llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+            <option value="groq/llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+            <option value="groq/mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+          </optgroup>
+          <optgroup label="☁ Cerebras (free tier — inference.cerebras.ai)">
+            <option value="cerebras/llama-4-scout-17b-16e-instruct">llama-4-scout-17b-16e-instruct</option>
+            <option value="cerebras/llama3.3-70b">llama3.3-70b</option>
+          </optgroup>
+          <optgroup label="☁ DeepSeek">
+            <option value="deepseek/deepseek-chat">deepseek-chat</option>
+          </optgroup>
+          <optgroup label="🏠 Ollama (local — ollama serve)">
+            <option value="ollama/qwen2.5:14b">qwen2.5:14b (best quality)</option>
+            <option value="ollama/qwen2.5:7b">qwen2.5:7b (lighter)</option>
+            <option value="ollama/llama3.2:8b">llama3.2:8b</option>
+            <option value="ollama/mistral:7b">mistral:7b</option>
+            <option value="ollama/phi4:mini">phi4:mini (3.8B, fast)</option>
+          </optgroup>
+        </select>
+        <div style="display:flex;gap:.4rem">
+          <input type="text" x-model="newModel" placeholder="or type custom: provider/model-name" @keydown.enter="addModel()" style="flex:1" />
+          <button class="btn btn-secondary" @click="addModel()">Add</button>
+        </div>
+      </div>
+
+      <label>LLM Timeout (seconds)</label>
+      <input type="number" x-model.number="config.llm_timeout" min="5" max="120" @change="saveConfig()" />
+
+      <div style="margin-top:1rem">
+        <div class="toggle-row">
+          <span>Tier 2a: invoice2data</span>
+          <label class="toggle"><input type="checkbox" x-model="config.enable_invoice2data" @change="saveConfig()" /><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Tier 2b: spaCy NER</span>
+          <label class="toggle"><input type="checkbox" x-model="config.enable_spacy" @change="saveConfig()" /><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Tier 2c: BERT NER <em style="font-weight:400;color:#aaa">(~400MB)</em></span>
+          <label class="toggle"><input type="checkbox" x-model="config.enable_bert_ner" @change="saveConfig()" /><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <label>Max Retry Attempts</label>
+      <input type="number" x-model.number="config.max_attempts" min="1" max="10" @change="saveConfig()" />
+
+      <label>Arithmetic Tolerance</label>
+      <input type="number" x-model.number="config.tolerance" step="0.001" min="0" @change="saveConfig()" />
+    </div>
+
+    <!-- ── Fault Injection Lab ──────────────────────────────────────────── -->
+    <div class="card" style="margin-top:1rem">
+      <h2>
+        Fault Injection Lab
+        <span :class="'fault-badge ' + (faultMode === 'none' ? 'fault-badge-off' : 'fault-badge-on')"
+              x-text="faultMode === 'none' ? 'OFF' : 'ACTIVE: ' + faultMode"></span>
+      </h2>
+      <div style="font-size:.75rem;color:#aaa;margin-bottom:.5rem">
+        Select a scenario, click Apply, then submit an invoice to observe the behavior.
+        Use the <strong>Load sample</strong> invoice for bad-math scenarios.
+      </div>
+
+      <div class="fault-scenario">
+        <template x-for="s in faultScenarios" :key="s.mode">
+          <div class="fault-card" :class="faultMode === s.mode ? 'active' : ''"
+               @click="faultMode = s.mode">
+            <div class="fault-name" x-text="s.name"></div>
+            <div class="fault-desc" x-text="s.desc"></div>
+          </div>
+        </template>
+      </div>
+
+      <div x-show="faultMode === 'llm_slow'" style="margin-top:.7rem">
+        <label>Slow delay (seconds)</label>
+        <input type="number" x-model.number="faultSlowDelay" min="1" max="120" step="1" />
+        <div style="font-size:.72rem;color:#aaa;margin-top:.2rem">
+          Set above <strong>LLM Timeout</strong> to trigger fallback; below to just show latency.
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:.8rem">
+        <button class="btn btn-primary" @click="applyFault()" :disabled="applyingFault">
+          <span x-show="applyingFault" class="spinner"></span>
+          <span x-show="!applyingFault">Apply Fault Config</span>
+        </button>
+        <button class="btn btn-secondary" @click="faultMode='none'; applyFault()"
+                :disabled="applyingFault" x-show="faultMode !== 'none'">
+          Reset to Normal
+        </button>
+      </div>
+
+      <!-- What to expect -->
+      <template x-if="faultMode !== 'none'">
+        <div style="margin-top:.8rem;padding:.6rem .75rem;background:#fff8e1;border-radius:7px;font-size:.78rem;color:#7d5a00;border:1px solid #ffe08a">
+          <strong>Expected behavior:</strong>
+          <span x-text="faultExpected"></span>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Test + Compare ──────────────────────────────────────────── -->
+  <div class="main-col">
+    <!-- Invoice input -->
+    <div class="card">
+      <h2>Invoice Text</h2>
+
+      <!-- Sample selector -->
+      <div style="display:flex;gap:.4rem;margin-bottom:.6rem;align-items:center">
+        <select x-model="selectedSample" @change="loadSelectedSample($event.target.value)"
+                style="flex:1;padding:.4rem .6rem;border:1px solid #ddd;border-radius:6px;font-size:.82rem;background:#fff">
+          <option value="">— Load a sample invoice —</option>
+          <option value="ds_happy">1 · Standard USD invoice — 4 items, all math correct → COMPLETED</option>
+          <option value="ds_ocr">2 · Heavy OCR noise — garbled chars, math correct → COMPLETED</option>
+          <option value="european">3 · European EUR — comma decimals (1.299,00) → COMPLETED</option>
+          <option value="ds_indian_gst">4 · Indian GST — lakh format, CGST+SGST dual tax → COMPLETED</option>
+          <option value="missing_fields">5 · Sparse invoice — no invoice#, no tax → COMPLETED with nulls</option>
+          <option value="bad_math_permanent">6 · Contradictory math — wrong numbers baked into source → NEEDS_REVIEW</option>
+          <option value="not_invoice">7 · Corrupted invoice — structure intact, all amounts unreadable → FAILED</option>
+        </select>
+        <button class="btn btn-secondary" style="white-space:nowrap"
+                @click="invoiceText=''; selectedSample=''">Clear</button>
+      </div>
+
+      <!-- D-4471 scenario runner -->
+      <div x-show="selectedSample === 'd4471'"
+           style="background:#fff8e1;border:1px solid #ffe08a;border-radius:7px;padding:.6rem .8rem;margin-bottom:.6rem;font-size:.78rem;color:#7d5a00">
+        <strong>Scenario 3 — D-4471:</strong> Simulates extractor failure mid-processing then immediate resubmit.
+        <ol style="margin:.4rem 0 0 1rem;line-height:1.8">
+          <li>Enable <strong>LLM Unavailable</strong> fault → click <strong>Submit (async)</strong> → invoice goes to FAILED</li>
+          <li>Disable fault → click <strong>Submit (async)</strong> again with same text</li>
+          <li>Observe: new request_id created (FAILED = terminal, retry allowed) → processes to COMPLETED</li>
+        </ol>
+      </div>
+
+      <textarea x-model="invoiceText" placeholder="Paste raw invoice text here, or select a sample above..."></textarea>
+
+      <div class="btn-row" style="margin-top:.6rem">
+        <button class="btn btn-primary" @click="runTest()" :disabled="testing || !invoiceText.trim()">
+          <span x-show="testing" class="spinner"></span>
+          Test (single chain)
+        </button>
+        <button class="btn btn-success" @click="runCompare()" :disabled="comparing || !invoiceText.trim()">
+          <span x-show="comparing" class="spinner"></span>
+          Compare All Tiers
+        </button>
+        <button class="btn" style="background:#f59e0b;color:#fff" @click="submitAsync()" :disabled="submitting || !invoiceText.trim()">
+          <span x-show="submitting" class="spinner"></span>
+          Submit (async)
+        </button>
+      </div>
+    </div>
+
+    <!-- Duplicate / in-progress warning -->
+    <div x-show="submitResult?.duplicate && ['PENDING','PROCESSING','VALIDATING'].includes(submitResult?.status)"
+         style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:.7rem 1rem;font-size:.83rem;color:#856404">
+      ⚠ <strong>Document already in progress.</strong>
+      Request <code x-text="submitResult?.request_id?.slice(0,8)+'…'"></code> is currently
+      <strong x-text="submitResult?.status"></strong>. Wait for it to complete before resubmitting.
+      Use <strong>Fetch Status</strong> to check progress.
+    </div>
+
+    <!-- Async submit result -->
+    <div class="card" x-show="submitResult">
+      <h2>Submitted
+        <span :class="'status-badge status-' + submitResult?.status" x-text="submitResult?.status" style="margin-left:.4rem"></span>
+      </h2>
+      <!-- DUPLICATE banner -->
+      <div x-show="submitResult?.duplicate"
+           style="background:#fff0e0;border:1px solid #f59e0b;border-radius:7px;padding:.6rem .8rem;margin-bottom:.5rem;font-size:.82rem;color:#c05c00">
+        🚫 <strong>DUPLICATE — not processed.</strong>
+        This invoice was already submitted. Returning existing record below.
+        No new extraction was run.
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem;margin-top:.5rem;flex-wrap:wrap">
+        <code style="background:#f5f5ff;padding:.3rem .6rem;border-radius:5px;font-size:.8rem;flex:1;min-width:0;word-break:break-all" x-text="submitResult?.request_id"></code>
+        <button class="btn btn-primary" @click="fetchStatus()" :disabled="fetchingStatus">
+          <span x-show="fetchingStatus" class="spinner"></span>
+          Fetch Status
+        </button>
+      </div>
+      <template x-if="fetchedInvoice">
+        <div style="margin-top:.8rem">
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <span :class="'status-badge status-' + fetchedInvoice.status" x-text="fetchedInvoice.status"></span>
+            <span class="tag" x-show="fetchedInvoice.extraction_method" x-text="fetchedInvoice.extraction_method"></span>
+            <span class="tag" style="background:#e8f4fd;color:#1d6fa5" x-show="fetchedInvoice.extraction_model" x-text="fetchedInvoice.extraction_model"></span>
+            <span style="font-size:.75rem;color:#aaa">attempt <span x-text="fetchedInvoice.attempt_count"></span></span>
+          </div>
+          <!-- Header fields — always all 7 (x-show avoids nested x-if issues) -->
+          <div x-show="fetchedInvoice.result" class="result-grid" style="margin-top:.6rem">
+            <template x-for="k in ['invoice_number','invoice_date','currency','subtotal','tax_total','total','vendor_name']" :key="k">
+              <div class="result-item">
+                <div class="key" x-text="k"></div>
+                <div class="val" :style="fetchedInvoice.result && fetchedInvoice.result[k] == null ? 'color:#bbb' : ''"
+                     x-text="fetchedInvoice.result ? (fetchedInvoice.result[k] ?? '—') : ''"></div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Line items -->
+          <div x-show="fetchedInvoice.result" style="margin-top:.8rem">
+            <label style="margin-top:0">Line Items
+              <span style="font-weight:400;color:#aaa;font-size:.75rem;margin-left:.4rem"
+                    x-text="'(' + (fetchedInvoice.result?.line_items?.length ?? 0) + ' items)'"></span>
+            </label>
+            <table class="line-items-table">
+              <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+              <tbody>
+                <template x-for="(item, i) in (fetchedInvoice.result?.line_items ?? [])" :key="i">
+                  <tr>
+                    <td x-text="i+1"></td>
+                    <td x-text="item.description ?? '—'"></td>
+                    <td x-text="item.quantity ?? '—'"></td>
+                    <td x-text="item.unit_price ?? '—'"></td>
+                    <td x-text="item.amount ?? '—'"></td>
+                  </tr>
+                </template>
+                <tr x-show="!fetchedInvoice.result?.line_items?.length">
+                  <td colspan="5" style="color:#bbb;text-align:center;padding:.6rem">No line items extracted</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Validation checks -->
+          <div x-show="fetchedInvoice.validation_checks?.checks?.length" style="margin-top:.8rem">
+            <label style="margin-top:0">Validation Checks
+              <span :class="'status-badge status-' + (fetchedInvoice.validation_checks?.all_passed ? 'COMPLETED' : 'FAILED')"
+                    style="margin-left:.4rem"
+                    x-text="fetchedInvoice.validation_checks?.all_passed ? 'ALL PASS' : 'FAILURES'"></span>
+            </label>
+            <template x-for="c in (fetchedInvoice.validation_checks?.checks ?? [])" :key="c.name">
+              <div class="check-row">
+                <span :class="c.passed ? 'check-pass' : 'check-fail'" x-text="c.passed ? '✓' : '✗'"></span>
+                <span x-text="c.name" style="font-weight:600;min-width:130px"></span>
+                <span x-text="c.message" style="color:#666;font-size:.78rem"></span>
+              </div>
+            </template>
+          </div>
+          <div x-show="fetchedInvoice.error" class="error-box" style="margin-top:.5rem" x-text="fetchedInvoice.error"></div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Single test result -->
+    <div class="card" x-show="testResult">
+      <h2>
+        Test Result
+        <span x-show="testResult?.status" :class="'status-badge status-' + testResult?.status"
+              x-text="testResult?.status"></span>
+        <span x-show="testResult?.extraction_method" class="tag" style="margin-left:.4rem" x-text="testResult?.extraction_method"></span>
+        <span x-show="testResult?.extraction_model" class="tag" style="margin-left:.2rem;background:#e8f4fd;color:#1d6fa5" x-text="testResult?.extraction_model"></span>
+        <span x-show="testResult?.latency_ms" style="font-size:.75rem;color:#aaa;margin-left:.5rem" x-text="testResult?.latency_ms + ' ms'"></span>
+        <span x-show="testResult?.request_id" style="font-size:.7rem;color:#bbb;margin-left:.5rem;font-family:monospace" x-text="testResult?.request_id?.slice(0,8) + '…'"></span>
+      </h2>
+
+      <!-- DUPLICATE warning (orange) -->
+      <div x-show="testResult?.status === 'DUPLICATE'"
+           style="background:#fff0e0;border:1px solid #f59e0b;border-radius:7px;padding:.6rem .8rem;margin-bottom:.5rem;font-size:.82rem;color:#c05c00">
+        🚫 <strong>DUPLICATE — not processed.</strong>
+        Invoice already exists (<span x-text="testResult?.request_id"></span>). Showing existing result below.
+      </div>
+      <!-- Regular error (red) -->
+      <div x-show="testResult?.error && testResult?.status !== 'DUPLICATE'" class="error-box" x-text="testResult?.error"></div>
+
+      <template x-if="testResult?.result">
+        <div>
+          <!-- Always show all 7 required fields (null → "—") -->
+          <div class="result-grid">
+            <template x-for="k in ['invoice_number','invoice_date','currency','subtotal','tax_total','total','vendor_name']" :key="k">
+              <div class="result-item">
+                <div class="key" x-text="k"></div>
+                <div class="val" :style="testResult.result[k] === null || testResult.result[k] === undefined ? 'color:#bbb' : ''"
+                     x-text="(testResult.result[k] !== null && testResult.result[k] !== undefined) ? testResult.result[k] : '—'"></div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Line items — always render table, show empty state if none -->
+          <div style="margin-top:1rem">
+            <label style="margin-top:0">Line Items
+              <span style="font-weight:400;color:#aaa;font-size:.75rem;margin-left:.4rem"
+                    x-text="'(' + (testResult.result.line_items?.length ?? 0) + ' items)'"></span>
+            </label>
+            <table class="line-items-table">
+              <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+              <tbody>
+                <template x-if="testResult.result.line_items?.length">
+                  <template x-for="(item, i) in testResult.result.line_items" :key="i">
+                    <tr>
+                      <td x-text="i+1"></td>
+                      <td x-text="item.description ?? '—'"></td>
+                      <td x-text="item.quantity ?? '—'"></td>
+                      <td x-text="item.unit_price ?? '—'"></td>
+                      <td x-text="item.amount ?? '—'"></td>
+                    </tr>
+                  </template>
+                </template>
+                <template x-if="!testResult.result.line_items?.length">
+                  <tr><td colspan="5" style="color:#bbb;text-align:center;padding:.6rem">No line items extracted</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <template x-if="testResult.validation_checks?.checks?.length">
+            <div style="margin-top:1rem">
+              <label style="margin-top:0">Validation Checks</label>
+              <template x-for="c in testResult.validation_checks.checks" :key="c.name">
+                <div class="check-row">
+                  <span :class="c.passed ? 'check-pass' : 'check-fail'" x-text="c.passed ? '✓' : '✗'"></span>
+                  <span x-text="c.name" style="font-weight:600;min-width:120px"></span>
+                  <span x-text="c.message" style="color:#666"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- Compare results -->
+    <div class="card" x-show="compareResults.length">
+      <h2>Tier Comparison</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tier / Model</th>
+            <th>Valid?</th>
+            <th>Invoice #</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Lines</th>
+            <th>Latency</th>
+            <th>Error</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(r, i) in compareResults" :key="i">
+            <>
+            <tr :style="compareExpanded === i ? 'background:#f5f5ff' : ''">
+              <td>
+                <span class="tag" x-text="r.extraction_method"></span>
+                <div x-show="r.extraction_model" style="font-size:.72rem;color:#888;margin-top:.2rem" x-text="r.extraction_model"></div>
+              </td>
+              <td>
+                <!-- COMPLETED: has result + all checks pass
+                     NEEDS_REVIEW: has result + checks fail (data extracted, math wrong)
+                     FAILED: no result or error -->
+                <span :class="'status-badge status-' + (
+                        r.validation_checks?.all_passed ? 'COMPLETED' :
+                        (r.result && (r.result.total != null || r.result.subtotal != null || r.result.line_items?.length) ? 'NEEDS_REVIEW' : 'FAILED')
+                      )"
+                      x-text="
+                        r.validation_checks?.all_passed ? 'COMPLETED' :
+                        (r.result && (r.result.total != null || r.result.subtotal != null || r.result.line_items?.length) ? 'NEEDS_REVIEW' : 'FAILED')
+                      "></span>
+              </td>
+              <td x-text="r.result?.invoice_number ?? '—'"></td>
+              <td x-text="r.result?.invoice_date ?? '—'"></td>
+              <td x-text="r.result?.total ?? '—'"></td>
+              <td x-text="r.result?.line_items?.length ?? '—'"></td>
+              <td x-text="r.latency_ms + ' ms'"></td>
+              <td style="color:#e74c3c;font-size:.75rem" x-text="r.error ?? ''"></td>
+              <td>
+                <button class="btn btn-secondary" style="padding:.2rem .5rem;font-size:.72rem"
+                        x-text="compareExpanded === i ? '▲ Hide' : '▼ View'"
+                        @click="compareExpanded = compareExpanded === i ? null : i"></button>
+              </td>
+            </tr>
+            <!-- Expanded detail row -->
+            <tr x-show="compareExpanded === i" style="background:#f9f9ff">
+              <td colspan="9" style="padding:.8rem 1rem">
+                <!-- All 7 fields -->
+                <div class="result-grid" style="margin-bottom:.8rem" x-show="r.result">
+                  <template x-for="k in ['invoice_number','invoice_date','currency','subtotal','tax_total','total','vendor_name']" :key="k">
+                    <div class="result-item">
+                      <div class="key" x-text="k"></div>
+                      <div class="val" :style="r.result && r.result[k] == null ? 'color:#bbb' : ''"
+                           x-text="r.result ? (r.result[k] ?? '—') : '—'"></div>
+                    </div>
+                  </template>
+                </div>
+                <!-- Line items -->
+                <div x-show="r.result" style="margin-bottom:.8rem">
+                  <label style="margin-top:0;font-size:.75rem">Line Items
+                    <span style="font-weight:400;color:#aaa;margin-left:.3rem" x-text="'(' + (r.result?.line_items?.length ?? 0) + ')'"></span>
+                  </label>
+                  <table class="line-items-table">
+                    <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+                    <tbody>
+                      <template x-for="(item, j) in (r.result?.line_items ?? [])" :key="j">
+                        <tr>
+                          <td x-text="j+1"></td>
+                          <td x-text="item.description ?? '—'"></td>
+                          <td x-text="item.quantity ?? '—'"></td>
+                          <td x-text="item.unit_price ?? '—'"></td>
+                          <td x-text="item.amount ?? '—'"></td>
+                        </tr>
+                      </template>
+                      <tr x-show="!r.result?.line_items?.length">
+                        <td colspan="5" style="color:#bbb;text-align:center;padding:.4rem">No line items</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- Validation checks -->
+                <div x-show="r.validation_checks?.checks?.length">
+                  <label style="margin-top:0;font-size:.75rem">Validation
+                    <span :class="'status-badge status-' + (r.validation_checks?.all_passed ? 'COMPLETED':'FAILED')"
+                          style="margin-left:.3rem"
+                          x-text="r.validation_checks?.all_passed ? 'ALL PASS' : 'FAILURES'"></span>
+                  </label>
+                  <template x-for="c in (r.validation_checks?.checks ?? [])" :key="c.name">
+                    <div class="check-row">
+                      <span :class="c.passed ? 'check-pass' : 'check-fail'" x-text="c.passed ? '✓' : '✗'"></span>
+                      <span x-text="c.name" style="font-weight:600;min-width:120px"></span>
+                      <span x-text="c.message" style="color:#666;font-size:.78rem"></span>
+                    </div>
+                  </template>
+                </div>
+              </td>
+            </tr>
+            </>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Submissions history -->
+    <div class="card">
+      <h2>All Submissions
+        <button class="btn btn-secondary" style="float:right;padding:.25rem .6rem;font-size:.75rem" @click="loadHistory()">↻ Refresh</button>
+      </h2>
+      <template x-if="history.length === 0">
+        <div style="color:#bbb;font-size:.82rem;padding:.4rem 0">No submissions yet.</div>
+      </template>
+      <template x-if="history.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Status</th>
+              <th>Method</th>
+              <th>Model</th>
+              <th>Attempts</th>
+              <th>Submitted</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in history" :key="row.request_id">
+              <tr>
+                <td style="font-family:monospace;font-size:.72rem" x-text="row.request_id.slice(0,8) + '…'"></td>
+                <td><span :class="'status-badge status-' + row.status" x-text="row.status"></span></td>
+                <td><span class="tag" x-show="row.extraction_method" x-text="row.extraction_method"></span></td>
+                <td style="font-size:.72rem;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="row.extraction_model ?? '—'"></td>
+                <td style="text-align:center" x-text="row.attempt_count"></td>
+                <td style="font-size:.72rem;color:#888" x-text="new Date(row.created_at).toLocaleTimeString()"></td>
+                <td style="display:flex;gap:.3rem">
+                  <button class="btn btn-secondary" style="padding:.2rem .5rem;font-size:.72rem"
+                          @click="loadDetail(row.request_id)">View</button>
+                  <button class="btn" style="padding:.2rem .5rem;font-size:.72rem;background:#fde8e8;color:#c0392b"
+                          @click="deleteRecord(row.request_id)">✕</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </template>
+
+      <!-- Detail drawer (x-show avoids nested x-if rendering issues) -->
+      <div x-show="historyDetail" style="margin-top:1rem;border-top:1px solid #f0f0f0;padding-top:1rem">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap">
+          <strong style="font-size:.82rem">Detail:</strong>
+          <code style="font-size:.72rem;background:#f5f5ff;padding:.15rem .4rem;border-radius:4px" x-text="historyDetail?.request_id"></code>
+          <span :class="'status-badge status-' + historyDetail?.status" x-text="historyDetail?.status"></span>
+          <span class="tag" x-show="historyDetail?.extraction_method" x-text="historyDetail?.extraction_method"></span>
+          <span class="tag" style="background:#e8f4fd;color:#1d6fa5" x-show="historyDetail?.extraction_model" x-text="historyDetail?.extraction_model"></span>
+        </div>
+
+        <!-- Header fields -->
+        <div x-show="historyDetail?.result" class="result-grid" style="margin-bottom:.8rem">
+          <template x-for="k in ['invoice_number','invoice_date','currency','subtotal','tax_total','total','vendor_name']" :key="k">
+            <div class="result-item">
+              <div class="key" x-text="k"></div>
+              <div class="val" :style="historyDetail?.result && historyDetail.result[k] == null ? 'color:#bbb' : ''"
+                   x-text="historyDetail?.result ? (historyDetail.result[k] ?? '—') : ''"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Line items -->
+        <div x-show="historyDetail?.result" style="margin-bottom:.8rem">
+          <label style="margin-top:0">Line Items
+            <span style="font-weight:400;color:#aaa;font-size:.75rem;margin-left:.4rem"
+                  x-text="'(' + (historyDetail?.result?.line_items?.length ?? 0) + ' items)'"></span>
+          </label>
+          <table class="line-items-table">
+            <thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+            <tbody>
+              <template x-for="(item, i) in (historyDetail?.result?.line_items ?? [])" :key="i">
+                <tr>
+                  <td x-text="i+1"></td>
+                  <td x-text="item.description ?? '—'"></td>
+                  <td x-text="item.quantity ?? '—'"></td>
+                  <td x-text="item.unit_price ?? '—'"></td>
+                  <td x-text="item.amount ?? '—'"></td>
+                </tr>
+              </template>
+              <tr x-show="!historyDetail?.result?.line_items?.length">
+                <td colspan="5" style="color:#bbb;text-align:center;padding:.5rem">No line items extracted</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Validation checks -->
+        <div x-show="historyDetail?.validation_checks?.checks?.length">
+          <label style="margin-top:0">Validation Checks
+            <span :class="'status-badge status-' + (historyDetail?.validation_checks?.all_passed ? 'COMPLETED':'FAILED')"
+                  style="margin-left:.4rem"
+                  x-text="historyDetail?.validation_checks?.all_passed ? 'ALL PASS' : 'FAILURES'"></span>
+          </label>
+          <template x-for="c in (historyDetail?.validation_checks?.checks ?? [])" :key="c.name">
+            <div class="check-row">
+              <span :class="c.passed ? 'check-pass' : 'check-fail'" x-text="c.passed ? '✓' : '✗'"></span>
+              <span x-text="c.name" style="font-weight:600;min-width:130px"></span>
+              <span x-text="c.message" style="color:#666;font-size:.78rem"></span>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="historyDetail?.error" class="error-box" style="margin-top:.5rem" x-text="historyDetail?.error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 5 meaningful test samples (all work reliably with real LLM) ──────────────
+const SAMPLE_INVOICE = `INVOICE
+
+Invoice No: INV-2024-0042
+Date: 2024-03-15
+Currency: USD
+
+Vendor: Acme Supplies Ltd
+123 Commerce Street, New York, NY 10001
+
+Bill To: FynOS Inc.
+456 Finance Ave, San Francisco, CA 94105
+
+ITEMS:
+-----------------------------------------------------------
+Description           Qty   Unit Price    Amount
+-----------------------------------------------------------
+Widget Pro Model X     2      $49.99       $99.98
+Premium Support Plan   1     $150.00      $150.00
+Setup & Installation   1      $75.00       $75.00
+-----------------------------------------------------------
+
+Subtotal:    $324.98
+Tax (8%):     $25.99
+Total Due:   $350.97
+
+Payment Terms: Net 30
+Due Date: 2024-04-14`;
+
+const SAMPLES = {
+  // 1 · Standard USD — all math correct → COMPLETED
+  ds_happy: `INVOICE
+
+Invoice Number: INV-2024-0042
+Invoice Date: March 15, 2024
+Due Date: April 14, 2024
+
+From:                           To:
+TechSupply Co.                  Acme Corporation
+456 Industrial Blvd             789 Business Park
+San Jose, CA 95112              Austin, TX 73301
+
+Description                    Qty    Unit Price      Amount
+---------------------------------------------------------------
+USB-C Charging Cable (2m)       50       12.99       649.50
+Wireless Mouse (Ergonomic)      25       34.50       862.50
+Laptop Stand - Adjustable       10       79.00       790.00
+HDMI Cable 4K (3m)             100        8.75       875.00
+
+                                         Subtotal:  3,177.00
+                                         Tax (8%):    254.16
+                                         Total:     3,431.16
+
+Payment Terms: Net 30
+Currency: USD`,
+
+  // 2 · Heavy OCR noise — garbled chars, math correct → COMPLETED
+  ds_ocr: `lNV0lCE
+
+lnvoice  No.:   TK-2025-0891
+Oate: l5/O3/2O25
+
+Fr0m:  Quaiity Suppiies lnc.
+       45  Main  5treet,  Sui te  200
+       New Y0rk, NY  1OOO1
+
+T0: JKL Enterpri ses
+    789 0ak Avenue
+    Ch icago, lL  6O6O1
+
+Oescr iption                0ty   Un it Pr ice   Am0unt
+--------------------------------------------------------
+0ffice  Cha irs (Ergo)       10       249.99    2,499.90
+Stand ing  Oesk               5       599.00    2,995.00
+Monitor  Arm  (Dual)         20        45.50      910.00
+Keyboard  Wireless           30        29.99      899.70
+
+                                    Subtotal:   7,304.60
+                                    Tax (8.5%):   620.89
+                                    TOTAL:      7,925.49
+
+Terms: Net 30   Currency: USD`,
+
+  // 3 · European EUR — comma decimals → COMPLETED
+  european: `RECHNUNG / INVOICE
+Rechnungsnummer: RE-2025-0089
+Datum: 15.03.2025
+Wahrung: EUR
+Lieferant: Muller GmbH & Co. KG
+
+Pos  Beschreibung          Menge   Einzelpreis   Betrag
+1    Laptop Dell XPS 15    2       1.299,00      2.598,00
+2    Maus Logitech MX3     5          89,99        449,95
+3    USB-C Hub 7-Port      10         45,50        455,00
+4    Monitor 27 Zoll       1         599,00        599,00
+
+Zwischensumme:   4.101,95
+MwSt (19%):        779,37
+Gesamtbetrag:    4.881,32`,
+
+  // 4 · Indian GST — lakh format, CGST+SGST dual tax → COMPLETED
+  ds_indian_gst: `TAX INVOICE
+
+GSTIN: 29AABCT1332L1ZC                    Invoice No: KA/2024/07821
+                                           Date: 18-05-2024
+
+Seller: Bharat Textiles Pvt Ltd
+        No. 42, Industrial Area Phase II
+        Peenya, Bangalore - 560058
+
+Buyer: FashionMart Retail LLP
+       MG Road, Indiranagar
+       Bangalore - 560038
+       GSTIN: 29AADCF5678M1Z5
+
+HSN    Description              Qty    Rate       Amount
+5208   Cotton Fabric (meter)    500    245.00   1,22,500.00
+5209   Denim Fabric (meter)     300    380.00   1,14,000.00
+6109   Cotton T-Shirts          200    175.00      35,000.00
+6204   Ladies Kurta Sets        150    450.00      67,500.00
+
+                                     Subtotal   3,39,000.00
+                                     CGST @6%      20,340.00
+                                     SGST @6%      20,340.00
+                                     Total      3,79,680.00
+
+Currency: INR`,
+
+  // 5 · Sparse invoice — no invoice#, no tax → COMPLETED with nulls
+  missing_fields: `INVOICE
+
+Date: 2025-06-10
+
+Web Design Services     1     2500.00     2500.00
+Logo Creation           1      800.00      800.00
+Brand Guidelines        1      450.00      450.00
+
+Total: $3750.00`,
+
+  // 6 · Contradictory math baked into source — LLM will extract wrong numbers
+  //     every attempt because the TEXT itself is contradictory → NEEDS_REVIEW
+  bad_math_permanent: `INVOICE
+
+Invoice No: CONTRA-2025-001
+Date: 2025-08-15
+Currency: USD
+Vendor: Contradiction Supplies Ltd
+
+IMPORTANT NOTICE: The amounts below reflect post-discount pricing.
+Original unit prices are shown for reference only.
+
+Item Description         Qty   List Price   Final Amount
+Standard Widget           10      15.00        135.00
+Premium Widget             5      40.00        185.00
+Deluxe Widget              2     120.00        215.00
+
+[ACCOUNTING NOTE: The above amounts include a VARIABLE VOLUME DISCOUNT
+applied at invoice level. Do not recalculate from list prices.]
+
+Subtotal:    $535.00
+Tax (9%):     $48.15
+Total Due:   $583.15`,
+
+  // 7 · Severely corrupted invoice — structure intact, all numbers unreadable
+  //     LLM recognises it as invoice but cannot extract total/subtotal/line_items
+  //     → critically empty → FAILED
+  not_invoice: `INVOICE  [TRANSMISSION ERROR — PARTIAL RECOVERY]
+
+Doc ID : INV-████-████
+Date   : ██/██/████
+Vendor : Gl█bal Su██ly Co█p Ltd
+         ██ Indu██rial ██ - █lock ██
+
+Bill To: ████████████████████
+         ████████████████████
+
+ITEM TABLE [CORRUPTED — CRC MISMATCH 0xE3F7A1]
+----------------------------------------------------------
+Description          Qty    Unit Price       Amount
+----------------------------------------------------------
+████████████████     ███    ████████████    ████████████
+████████████████     ███    ████████████    ████████████
+████████████████     ███    ████████████    ████████████
+----------------------------------------------------------
+
+Subtotal  : ████████████████
+Tax       : ████████████████
+TOTAL DUE : ████████████████
+
+Payment due: ██ days from date of invoice
+[END OF RECOVERABLE CONTENT — REMAINING BYTES UNREADABLE]`,
+};
+
+function app() {
+  return {
+    config: {
+      llm_models: [],
+      llm_timeout: 30,
+      enable_invoice2data: true,
+      enable_spacy: true,
+      enable_bert_ner: false,
+      max_attempts: 3,
+      tolerance: 0.01,
+    },
+    newModel: '',
+    saving: false,
+    savedMsg: '',
+    invoiceText: '',
+    selectedSample: '',
+    testing: false,
+    comparing: false,
+    submitting: false,
+    fetchingStatus: false,
+    testResult: null,
+    compareResults: [],
+    submitResult: null,
+    fetchedInvoice: null,
+    history: [],
+    historyDetail: null,
+    compareExpanded: null,
+
+    // ── Fault injection state ────────────────────────────────────────────
+    faultMode: 'none',
+    faultSlowDelay: 5,
+    applyingFault: false,
+    faultScenarios: [
+      { mode: 'none',                name: 'None (normal operation)',       desc: 'All tiers work normally. No fault injected.' },
+      { mode: 'llm_unavailable',     name: 'LLM Unavailable (503)',         desc: 'All LLM calls raise 503. System falls through to Tier 2 (invoice2data / spaCy) and Tier 3 (regex). Observe extraction_method in result.' },
+      { mode: 'llm_timeout',         name: 'LLM Timeout',                   desc: 'All LLM calls simulate a timeout error. Same fallback path as unavailable. Tests your timeout error-handling branch.' },
+      { mode: 'llm_slow',            name: 'LLM Slow (configurable delay)', desc: 'Each LLM call sleeps fault_slow_delay seconds before proceeding. Set delay < LLM Timeout to test slow-but-successful. Set delay > LLM Timeout for real timeout.' },
+      { mode: 'llm_bad_math',        name: 'LLM Bad Math — fixed on retry', desc: 'Attempt 1: LLM returns wrong line-item arithmetic. Validator catches it, injects corrective prompt. Attempt 2: LLM returns correct numbers. Result: COMPLETED after 2 attempts.' },
+      { mode: 'llm_bad_math_always', name: 'LLM Bad Math — never fixed',    desc: 'LLM always returns arithmetically wrong data. Validator fails every attempt. After max_attempts exhausted → NEEDS_REVIEW. Use this to test human-review escalation.' },
+      { mode: 'llm_first_fails',     name: 'First Model Fails, Rest OK',    desc: 'First model in the chain raises 503. System tries the next model. Requires 2+ models configured. Shows per-model failover in action.' },
+    ],
+    get faultExpected() {
+      const m = {
+        llm_unavailable:     'Status: COMPLETED or NEEDS_REVIEW via Tier 2/3. extraction_method will be invoice2data, spacy, or heuristic — NOT llm.',
+        llm_timeout:         'Same as unavailable: LLM tier skipped entirely, Tier 2/3 takes over.',
+        llm_slow:            'LLM succeeds but with added latency. Watch the latency_ms field. Increase delay past LLM Timeout to trigger actual fallback.',
+        llm_bad_math:        'Attempt 1 extracts, validation FAILS (line_item_0 and total checks). Attempt 2 receives corrective prompt, validation PASSES. Final status: COMPLETED, attempt_count: 2.',
+        llm_bad_math_always: 'All attempts fail validation. After max_attempts, status becomes NEEDS_REVIEW. Validation checks panel shows persistent arithmetic failures.',
+        llm_first_fails:     'First model 503s silently. Second model (if configured) succeeds. extraction_model in result shows the second model name.',
+      };
+      return m[this.faultMode] || '';
+    },
+
+    async init() {
+      const res = await fetch('/config');
+      this.config = await res.json();
+      this.faultMode = this.config.fault_mode || 'none';
+      this.faultSlowDelay = this.config.fault_slow_delay || 5;
+      await this.loadHistory();
+    },
+
+    addModel() {
+      const m = this.newModel.trim();
+      if (m && !this.config.llm_models.includes(m)) {
+        this.config.llm_models.push(m);
+        this.newModel = '';
+      }
+    },
+
+    async saveConfig() {
+      this.saving = true;
+      try {
+        const res = await fetch('/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.config),
+        });
+        this.config = await res.json();
+        this.savedMsg = '✓ saved';
+        setTimeout(() => this.savedMsg = '', 2000);
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    loadSample() {
+      this.invoiceText = SAMPLE_INVOICE;
+    },
+
+    loadSelectedSample(key) {
+      const k = key || this.selectedSample;
+      if (k && SAMPLES[k]) {
+        this.invoiceText = SAMPLES[k];
+        this.testResult = null;
+        this.submitResult = null;
+        this.fetchedInvoice = null;
+      }
+    },
+
+    async runTest() {
+      this.testing = true;
+      this.testResult = null;
+      try {
+        // 1. Submit to real async endpoint
+        const submitRes = await fetch('/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: this.invoiceText,
+        });
+        const submitted = await submitRes.json();
+
+        // 2a. DUPLICATE — skip processing, fetch existing result immediately
+        if (submitted.duplicate) {
+          const existingRes = await fetch(`/invoices/${submitted.request_id}`);
+          const existing = await existingRes.json();
+          this.testResult = {
+            extraction_method: existing.extraction_method,
+            extraction_model: existing.extraction_model,
+            result: existing.result,
+            validation_checks: existing.validation_checks,
+            latency_ms: null,
+            error: `DUPLICATE — not reprocessed. Existing record: ${submitted.request_id}`,
+            status: 'DUPLICATE',
+            request_id: submitted.request_id,
+          };
+          return;
+        }
+
+        // 2b. New request — poll until terminal, show live status each cycle
+        const TERMINAL = ['COMPLETED', 'FAILED', 'NEEDS_REVIEW'];
+        let inv = submitted;
+        // Show live intermediate status in result panel header while polling
+        this.testResult = { status: inv.status, request_id: inv.request_id,
+          extraction_method: null, extraction_model: null, result: null,
+          validation_checks: null, latency_ms: null, error: null };
+        for (let i = 0; i < 200; i++) {
+          if (TERMINAL.includes(inv.status)) break;
+          await new Promise(r => setTimeout(r, 300));  // 300ms — catches VALIDATING
+          const pollRes = await fetch(`/invoices/${submitted.request_id}`);
+          inv = await pollRes.json();
+          // Update live status badge without clearing result yet
+          this.testResult = { ...this.testResult, status: inv.status };
+        }
+
+        // 3. Normalise to shape the result panel expects
+        this.testResult = {
+          extraction_method: inv.extraction_method,
+          extraction_model: inv.extraction_model,
+          result: inv.result,
+          validation_checks: inv.validation_checks,
+          latency_ms: inv.updated_at && inv.created_at
+            ? Math.round((new Date(inv.updated_at) - new Date(inv.created_at)))
+            : null,
+          error: inv.error,
+          status: inv.status,
+          request_id: inv.request_id,
+        };
+
+        await this.loadHistory();
+      } finally {
+        this.testing = false;
+      }
+    },
+
+    async runCompare() {
+      this.comparing = true;
+      this.compareResults = [];
+      this.compareExpanded = null;
+      try {
+        const res = await fetch('/invoices/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ document_text: this.invoiceText }),
+        });
+        const data = await res.json();
+        this.compareResults = data.results;
+      } finally {
+        this.comparing = false;
+      }
+    },
+
+    async submitAsync() {
+      this.submitting = true;
+      this.fetchedInvoice = null;
+      if (this._sse) { this._sse.close(); this._sse = null; }
+      this.submitResult = { request_id: '…', status: 'PENDING', duplicate: false };
+      try {
+        const res = await fetch('/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: this.invoiceText,
+        });
+        const data = await res.json();
+        this.submitResult = { ...data };
+        // Open SSE stream for real-time status updates
+        if (data.request_id && !data.duplicate) {
+          this._openSSE(data.request_id);
+        }
+      } finally {
+        this.submitting = false;
+      }
+      this.loadHistory();
+    },
+
+    _openSSE(request_id) {
+      const TERMINAL = new Set(['COMPLETED', 'NEEDS_REVIEW', 'FAILED', 'DUPLICATE']);
+      const es = new EventSource(`/invoices/${request_id}/stream`);
+      this._sse = es;
+      es.onmessage = (e) => {
+        const d = JSON.parse(e.data);
+        if (d.error || d.status === 'timeout') { es.close(); this._sse = null; return; }
+        // Update status badge in real-time
+        this.submitResult = { ...this.submitResult, status: d.status };
+        if (TERMINAL.has(d.status)) {
+          es.close();
+          this._sse = null;
+          // Fetch full result and refresh history when done
+          this.fetchStatus();
+          this.loadHistory();
+        }
+      };
+      es.onerror = () => { es.close(); this._sse = null; };
+    },
+
+    async fetchStatus() {
+      if (!this.submitResult?.request_id || this.submitResult.request_id === '…') return;
+      this.fetchingStatus = true;
+      try {
+        const res = await fetch(`/invoices/${this.submitResult.request_id}`);
+        const inv = await res.json();
+        this.fetchedInvoice = inv;
+        // Reassign whole object — guaranteed Alpine reactivity
+        this.submitResult = { ...this.submitResult, status: inv.status };
+      } finally {
+        this.fetchingStatus = false;
+      }
+    },
+
+    async loadHistory() {
+      try {
+        const res = await fetch('/invoices');
+        this.history = await res.json();
+      } catch {}
+    },
+
+    async loadDetail(request_id) {
+      const res = await fetch(`/invoices/${request_id}`);
+      this.historyDetail = await res.json();
+    },
+
+    async deleteRecord(request_id) {
+      if (!confirm(`Delete record ${request_id.slice(0,8)}…? This cannot be undone.`)) return;
+      await fetch(`/invoices/${request_id}`, { method: 'DELETE' });
+      if (this.historyDetail?.request_id === request_id) this.historyDetail = null;
+      if (this.submitResult?.request_id === request_id) this.submitResult = null;
+      await this.loadHistory();
+    },
+
+    async applyFault() {
+      this.applyingFault = true;
+      try {
+        const res = await fetch('/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fault_mode: this.faultMode,
+            fault_slow_delay: this.faultSlowDelay,
+          }),
+        });
+        const updated = await res.json();
+        this.config.fault_mode = updated.fault_mode;
+        this.config.fault_slow_delay = updated.fault_slow_delay;
+        this.faultMode = updated.fault_mode;
+        this.faultSlowDelay = updated.fault_slow_delay;
+      } finally {
+        this.applyingFault = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

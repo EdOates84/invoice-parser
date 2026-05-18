@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+*.mov
+*.mp4
+*.mov
+*.mp4

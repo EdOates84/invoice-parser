@@ -1,0 +1,25 @@
+INVOICE
+
+SoftCloud Technologies
+lnnovation Hub, Austin, TX 78759
+
+Customer: Pinnacle Financial Group
+50 Wall Street, New York, NY 10005
+
+lnvoice lD  : SC-lNV-00892
+Date        : 10/30/2024
+Currency    : USD
+
+Product / Service                   Qty   Unit Price   Line Total
+-----------------------------------------------------------------
+Enterprise License (Annual)           5     299.00      1,495.00
+Admin Training Sessions               2     500.00      1,000.00
+-----------------------------------------------------------------
+                                          Subtotal  :   2,495.00
+                                          Tax (10%) :     249.50
+                                          TOTAL     :   2,800.00
+
+# EXPECTED FAILURE: total check
+# subtotal + tax = 2,495.00 + 249.50 = 2,744.50
+# But TOTAL printed as 2,800.00 (source doc error)
+# delta = 55.50 -- triggers retry loop

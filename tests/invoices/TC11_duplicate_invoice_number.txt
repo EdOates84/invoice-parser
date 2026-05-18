@@ -1,0 +1,31 @@
+INVOICE COPY
+
+TechCorp Solutions Ltd.
+San Francisco , CA
+
+Billed To : Acme Enterprises lnc.
+
+lnvoice #  : INV-2024-0847
+Date       : 15 Nov 2024
+Currency   : USD
+
+Web Development Services    40 hrs   @ $125.00/hr    $5,000.00
+Ul/UX Design               20 hrs   @  $95.00/hr    $1,900.00
+Server Configuration         1 unit  @ $450.00       $  450.00
+Code Review & QA            16 hrs   @  $85.00/hr    $1,360.00
+
+Subtotal : $8,710.00
+Tax (8%) : $  696.80
+Total    : $9,406.80
+
+*** COPY - Original issued 11/15/2024 ***
+
+# PREREQ: Submit TC01 first
+# EXPECTED: duplicate=false, status=COMPLETED (new request created)
+#
+# WHY: dedup in main.py uses content_hash = SHA256(document_text)
+# TC11 has DIFFERENT document_text than TC01 → different hash → new request
+# invoice_number match is NOT checked at submit time (number unknown until extraction)
+#
+# What client observes: new request_id, processes normally, extracts INV-2024-0847 again
+# The "same invoice twice" scenario from the spec is covered by TC12 (identical text)

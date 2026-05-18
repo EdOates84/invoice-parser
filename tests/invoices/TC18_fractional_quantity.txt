@@ -1,0 +1,30 @@
+INVOICE
+
+Clarity Consulting Group
+One Summit Plaza, Boston, MA 02110
+
+To: Redwood Financial Corp.
+500 Harbor Drive, Portland, OR 97201
+
+Invoice No   : CCG-2024-0229
+Date         : 11/14/2024
+Currency     : USD
+
+Service Description              Hrs   Rate/Hr    Amount
+---------------------------------------------------------
+Strategy Workshop Facilitation   2.5   200.00      500.00
+Follow-up Report Writing         0.5   150.00       75.00
+Travel Time (portal-to-portal)   1.5    80.00      120.00
+---------------------------------------------------------
+                                        Subtotal :   695.00
+                                        Tax (10%):    69.50
+                                        Total    :   764.50
+
+# EXPECTED: COMPLETED, all checks pass
+# Fractional quantities — validator handles float qty natively
+#
+# item0: 2.5 × 200 = 500.00  OK
+# item1: 0.5 × 150 =  75.00  OK
+# item2: 1.5 × 80  = 120.00  OK
+# subtotal: 500+75+120 = 695  OK
+# total: 695 + 69.50 = 764.50  OK

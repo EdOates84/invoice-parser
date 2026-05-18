@@ -1,0 +1,30 @@
+INVOICE
+
+Precision Tooling Inc.
+12 Manufacturing Way, Detroit, MI 48201
+
+To: Midwest Assembly Corp.
+600 Plant Road, Cincinnati, OH 45201
+
+Invoice No   : PTI-2024-0667
+Date         : 11/20/2024
+Currency     : USD
+
+Description               Qty   Unit Price    Amount
+------------------------------------------------------
+CNC Cutting Tools          3     247.50       742.50
+------------------------------------------------------
+                                   Subtotal :   742.50
+                                   Tax (7.5%):   55.69
+                                   Total    :   798.19
+
+# EXPECTED: COMPLETED, all checks pass
+# Tax rounding: 742.50 × 0.075 = 55.6875, printed as 55.69 (rounded up)
+#
+# item0: 3 × 247.50 = 742.50  OK
+# subtotal: 742.50  OK
+# total critical: 742.50 + 55.69 = 798.19 = reported  OK
+#   (delta between 55.6875 and 55.69 is 0.0025 — well within tolerance=0.01)
+#
+# This also tests that validator uses EXTRACTED tax_total (55.69)
+# not recomputed tax, so rounding is consistent.

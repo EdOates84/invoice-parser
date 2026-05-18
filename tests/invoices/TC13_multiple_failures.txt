@@ -1,0 +1,26 @@
+TAX INVOICE
+
+BuildRight Hardware
+88 Depot Road , Phoenix , AZ 85001
+
+To : Desert Construction LLC
+200 Sunset Blvd , Scottsdale , AZ 85251
+
+lnvoice No   : BR-lNV-2024-0512
+Date         : 11/22/2024
+Currency     : USD
+
+ltem Description              Qty   Unit Price   Amount
+-------------------------------------------------------
+Concrete Mix Bags              10      25.00      250.00
+Steel Reinforcing Bars          5      80.00      350.00
+-------------------------------------------------------
+                                    Subtotal :   600.00
+                                    Tax (10%):    60.00
+                                    Total Due :  700.00
+
+# EXPECTED FAILURES: line_item_1 AND total (both in one retry prompt)
+# line_item_1: 5 x 80.00 = 400.00, reported 350.00 (delta=50)
+# subtotal: 250+350=600 = reported (OK -- consistent with wrong line item)
+# total: 600+60=660 != 700 (delta=40)
+# Both failures fed to LLM in single retry prompt

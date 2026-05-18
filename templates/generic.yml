@@ -1,0 +1,39 @@
+issuer: Generic Invoice
+keywords:
+  - invoice
+  - Invoice
+  - INVOICE
+  - bill
+  - Bill
+  - receipt
+  - Receipt
+exclude_keywords:
+  - purchase order
+  - PO Number
+fields:
+  invoice_number:
+    parser: regex
+    regex:
+      - (?:invoice\s*(?:no|number|num|#)?[\s:]*)([\w][\w\-/\.]{1,30})
+      - (?:INV[\-\s]?)([\d]{3,15})
+      - (?:Bill\s*(?:No|Number|#)?[\s:]*)([\w\-/]{2,20})
+  date:
+    parser: regex
+    regex:
+      - (?:(?:invoice\s*)?date[\s:]*)([\d]{1,2}[\/\-\.][\d]{1,2}[\/\-\.][\d]{2,4})
+      - ([\d]{4}[\/\-\.][\d]{2}[\/\-\.][\d]{2})
+      - ([\d]{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+[\d]{4})
+    type: date
+    dateparser_settings:
+      PREFER_DAY_OF_MONTH: first
+  amount:
+    parser: regex
+    regex:
+      - (?:total\s*(?:due|amount)?[\s:]*)\$?\s*([\d,]+\.[\d]{2})
+      - (?:grand\s*total[\s:]*)\$?\s*([\d,]+\.[\d]{2})
+      - (?:amount\s*(?:due|payable)[\s:]*)\$?\s*([\d,]+\.[\d]{2})
+    type: float
+  currency:
+    parser: regex
+    regex:
+      - \b(USD|EUR|GBP|INR|AUD|CAD|SGD|AED|JPY|CNY)\b

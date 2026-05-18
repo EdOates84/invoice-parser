@@ -1,0 +1,28 @@
+CREDIT NOTE
+
+From: Premium Supplies lnc.
+500 Commerce Blvd , Miami , FL 33131
+
+To: Oceanside Hotels Group
+200 Beachfront Ave , Tampa , FL 33602
+
+Credit Note Number  : CN-2024-0147
+Reference lnvoice   : lNV-2024-0389
+Date                : 11/05/2024
+Currency            : USD
+
+Reason : Returned damaged goods and billing correction
+
+ltem                              Qty   Unit Price    Amount
+------------------------------------------------------------
+Damaged Bed Linens ( Return )     -10      45.00     -450.00
+Overcharge Correction               1    -125.00     -125.00
+------------------------------------------------------------
+                                        Subtotal :   -575.00
+                                        Tax (8%) :    -46.00
+                                        Total Credit : -621.00
+
+# EXPECTED: COMPLETED, all checks pass
+# -10 x 45.00 = -450.00 (OK)
+# 1 x -125.00 = -125.00 (OK)
+# Sum = -575.00, Tax 8% = -46.00, Total = -621.00

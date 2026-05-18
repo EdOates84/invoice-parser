@@ -1,0 +1,35 @@
+lNVOlCE
+
+TechCorp Solutions Ltd.
+123 lnnovation Drive, San Francisco, CA 94105
+Tel: (415) 555-0192
+
+Bill To:
+Acme Enterprises lnc.
+456 Business Park
+New York, NY 10001
+
+lnvoice Number : INV-2024-0847
+lnvoice Date   : 11/15/2024
+Due Date       : 12/15/2024
+Currency       : USD
+
+DESCRIPTION                      QTY   UNIT PRICE    AMOUNT
+-----------------------------------------------------------------
+Web Development Services          40     125.00      5,000.00
+UI/UX Design                      20      95.00      1,900.00
+Server Configuration Setup         1     450.00        450.00
+Code Review & QA                  16      85.00      1,360.00
+-----------------------------------------------------------------
+                                       Subtotal :    8,710.00
+                                       Tax (8%) :      696.80
+                                       TOTAL DUE :   9,406.80
+
+Payment Terms: Net 30
+Bank: Chase Bank  |  Account: 123456789  |  Routing: 021000021
+
+# PREREQ: Submit TC01 first
+# IDENTICAL document_text to TC01 (byte-for-byte)
+# Simulates client retry after timeout -- never saw first response
+# EXPECTED: service returns same result without double-processing
+# (same request_id, or duplicate=true, per your implementation choice)

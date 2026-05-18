@@ -1,0 +1,33 @@
+INVOICE
+
+ProGear Equipment Ltd.
+77 Industrial Avenue, Dallas, TX 75201
+
+Bill To: Northfield Gym Group
+14 Fitness Blvd, Denver, CO 80201
+
+Invoice No  : PG-2024-0334
+Date        : 11/25/2024
+Currency    : USD
+
+ITEM                     QTY   UNIT PRICE   DISC %   AMOUNT
+------------------------------------------------------------
+Commercial Treadmill      10     200.00      15%    1,700.00
+Adjustable Dumbbells      20      85.00      10%    1,530.00
+Resistance Bands (set)    50      12.00       5%      570.00
+------------------------------------------------------------
+                                          Subtotal : 3,800.00
+                                          Tax (8%) :   304.00
+                                          Total    : 4,104.00
+
+Net 30. Discount applied per negotiated contract pricing.
+
+# EXPECTED: COMPLETED, all checks pass
+# line_items[].discount_percent present — validator uses:
+#   amount = qty × unit_price × (1 - discount_percent/100)
+#
+# item0: 10 × 200 × (1-0.15) = 1700.00  OK
+# item1: 20 × 85  × (1-0.10) = 1530.00  OK
+# item2: 50 × 12  × (1-0.05) =  570.00  OK
+# subtotal advisory: 1700+1530+570 = 3800 = reported  OK
+# total critical: 3800 + 304 = 4104 = reported  OK

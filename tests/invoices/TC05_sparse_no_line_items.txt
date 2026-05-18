@@ -1,0 +1,21 @@
+Invoice
+
+To: Mr. James Whitfield
+From: Sarah Chen Photography
+sarah.chen @ email.com
+
+Photography Session
+Corporate Headshots ( half day )
+Date of Service : November 12 , 2024
+
+Service Fee : $850.00
+
+Payment via PayPal : sarah.chen @ email.com
+or bank transfer on request .
+
+Thank you !
+
+# EXPECTED: invoice_number=null, tax_total=null, currency=null
+# No structured line items with qty/unit_price
+# All validation checks skipped (null values)
+# Status: COMPLETED with many null fields

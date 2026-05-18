@@ -1,0 +1,27 @@
+|NV0|CE
+
+Fr0m : Apex Manufactur|ng C0.
+B|dg 7 , |ndustr|a| Estate , Detr0|t , M| 48201
+
+B||| T0 : Greenf|e|d Reta|| |nc.
+99 St0re Street , Ph||ade|ph|a , PA 19103
+
+|nv0|ce N0 : |NV-2024-0651
+|nv0|ce Date : 11/01/2024
+Currency : USD
+
+DESCR|PT|0N              QTY    UN|T PR|CE    AM0UNT
+----------------------------------------------------
+Stee| W|dgets Type-A     100      12.50       1,250.00
+C0pper F|tt|ngs 3/4"      50      18.75         937.50
+Rubber Sea| K|ts          25      24.00         600.00
+----------------------------------------------------
+                         Subt0ta| :    2,787.50
+                         Tax 8%   :      223.00
+                         T0ta| Due :   3,010.50
+
+# EXPECTED: COMPLETED, all checks pass
+# Heavy OCR noise: | for l/I, 0 for O, garbled words
+# Underlying math is correct:
+# 100x12.50=1250, 50x18.75=937.50, 25x24=600
+# Sum=2787.50, Tax 8%=223.00, Total=3010.50

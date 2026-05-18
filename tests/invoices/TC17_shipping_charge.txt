@@ -1,0 +1,34 @@
+INVOICE
+
+Rapid Parts Supply Co.
+45 Warehouse Row, Memphis, TN 38101
+
+Ship To: Valley Auto Repair
+301 Main Street, Little Rock, AR 72201
+
+Invoice No   : RPS-2024-1042
+Date         : 11/18/2024
+Currency     : USD
+
+Part Description              Qty   Unit Price    Amount
+---------------------------------------------------------
+Brake Pads (front pair)         2     150.00       300.00
+Oil Filter (synthetic)          4      80.00       320.00
+---------------------------------------------------------
+                                         Subtotal :   620.00
+                                         Tax (8%) :    49.60
+                              Shipping & Handling :    25.00
+                                           TOTAL :   694.60
+
+Shipped via FedEx Ground. Tracking provided separately.
+
+# EXPECTED: COMPLETED, all checks pass
+# shipping field present on extraction — validator uses:
+#   total = subtotal - discount + shipping + tax
+#
+# item0: 2 × 150 = 300  OK
+# item1: 4 × 80  = 320  OK
+# subtotal: 300+320 = 620 = reported  OK
+# total: 620 - 0 + 25 + 49.60 = 694.60 = reported  OK
+#
+# WITHOUT shipping support: 620 + 49.60 = 669.60 ≠ 694.60 → false FAIL
